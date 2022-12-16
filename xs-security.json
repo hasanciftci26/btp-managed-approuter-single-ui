@@ -1,0 +1,7 @@
+{
+  "xsappname": "btp-managed-approuter-single-ui",
+  "tenant-mode": "dedicated",
+  "description": "Security profile of called application",
+  "scopes": [],
+  "role-templates": []
+}

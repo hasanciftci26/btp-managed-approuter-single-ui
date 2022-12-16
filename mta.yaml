@@ -1,0 +1,98 @@
+_schema-version: "3.2"
+ID: btp-managed-approuter-single-ui
+version: 0.0.1
+modules:
+  - name: btp-mng-app-dest-content
+    type: com.sap.application.content
+    requires:
+      - name: btp-mng-app-dest-srv
+        parameters:
+          content-target: true
+      - name: btp-mng-app_html_repo_host
+        parameters:
+          service-key:
+            name: btp-mng-app_html_repo_host-key
+      - name: btp-mng-app-uaa
+        parameters:
+          service-key:
+            name: btp-mng-app-uaa-key
+    parameters:
+      content:
+        instance:
+          destinations:
+            - Name: ndbs_mng_ui3_repo_host
+              ServiceInstanceName: btp-mng-app_html_repo_host
+              ServiceKeyName: btp-mng-app_html_repo_host-key
+              sap.cloud.service: ndbs-mng-ui3
+            - Authentication: OAuth2UserTokenExchange
+              Name: ndbs_mng_ui3_uaa
+              ServiceInstanceName: btp-mng-app-uaa
+              ServiceKeyName: btp-mng-app-uaa-key
+              sap.cloud.service: ndbs-mng-ui3
+          existing_destinations_policy: ignore
+    build-parameters:
+      no-source: true
+  - name: btp-mng-app-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: btp-mng-app_html_repo_host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - ndbstraininghtml5ui3.zip
+          name: ndbstraininghtml5ui3
+          target-path: resources/
+  - name: ndbstraininghtml5ui3
+    type: html5
+    path: html5-ui3
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms: []
+resources:
+  - name: btp-mng-app-dest-srv
+    type: org.cloudfoundry.managed-service
+    parameters:
+      config:
+        HTML5Runtime_enabled: true
+        init_data:
+          instance:
+            destinations:
+              - Authentication: NoAuthentication
+                Name: ui5
+                ProxyType: Internet
+                Type: HTTP
+                URL: https://ui5.sap.com
+              - Authentication: NoAuthentication
+                Name: northwind
+                ProxyType: Internet
+                Type: HTTP
+                URL: https://services.odata.org
+                HTML5.DynamicDestination: true
+            existing_destinations_policy: update
+        version: 1.0.0
+      service: destination
+      service-name: btp-mng-app-dest-srv
+      service-plan: lite
+  - name: btp-mng-app_html_repo_host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-name: btp-mng-app_html_repo_host
+      service-plan: app-host
+  - name: btp-mng-app-uaa
+    type: org.cloudfoundry.managed-service
+    parameters:
+      path: ./xs-security.json
+      service: xsuaa
+      service-name: btp-mng-app-uaa
+      service-plan: application
+parameters:
+  deploy_mode: html5-repo
